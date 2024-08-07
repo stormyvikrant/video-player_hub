@@ -1,0 +1,21 @@
+<div class="main__container">
+  <div
+    style="
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      background-color: black;
+      gap: 2rem;
+    "
+  >
+    <button (click)="prevPage()" mat-raised-button>Prev</button>
+    <span style="color: white; margin-top: 10px"
+      >{{ currentPage }} / {{ totalPages }}</span
+    >
+    <button (click)="nextPage()" mat-raised-button>Next</button>
+  </div>
+
+  <div style="width: 100%; max-height: 80vh; overflow: auto">
+    <canvas id="pdf-canvas" style="width: 100%"></canvas>
+  </div>
+</div>

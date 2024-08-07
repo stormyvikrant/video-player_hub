@@ -1,0 +1,25 @@
+<div
+  style="display: flex; justify-content: center; border-bottom: 1px solid #ccc"
+>
+  <h1 class="m-0">Vimeo Player Demo With Validation</h1>
+</div>
+
+<div class="sample__Links">
+  <h3 class="exampleLink" style="color: red">Sample and Test Links</h3>
+  <h5 class="exampleLink">
+    https://player.vimeo.com/video/76979871?h=8272103f6e
+  </h5>
+  <h5 class="exampleLink">
+    https://player.vimeo.com/video/1084537?h=8272103f6e
+  </h5>
+  <h5 class="exampleLink">https://vimeo.com/76979871</h5>
+  <h5 class="exampleLink">https://www.youtube.com/watch?v=sINBfk0nBd8</h5>
+</div>
+<div>
+  <input type="text" #videoInput placeholder="Enter Vimeo video URL" />
+  <button (click)="validateVideo()">Validate Video</button>
+</div>
+
+<div *ngIf="showPlayer">
+  <div data-vimeo-width="640" id="video01"></div>
+</div>

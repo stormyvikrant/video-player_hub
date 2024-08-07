@@ -1,0 +1,350 @@
+import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
+import videojs from 'video.js';
+@Component({
+  selector: 'app-videojs-player',
+  templateUrl: './videojs-player.component.html',
+  styleUrls: ['./videojs-player.component.scss'],
+})
+export class VideojsPlayerComponent implements OnInit {
+  @ViewChild('videoPlayer', { static: true }) videoPlayerRef!: ElementRef;
+  player!: videojs.Player;
+  vttContent: string = '';
+
+  ngOnInit(): void {
+    // this.loadCaptions();
+    this.initializePlayer();
+
+    const srtFilePath = '../../../assets/vikrant_caption.srt'; // Replace with your actual file path
+
+    console.log('check ', this.fetchSRTAndConvertToWebVTT(srtFilePath));
+  }
+  async fetchSRTAndConvertToWebVTT(srtFilePath: string) {
+    try {
+      const response = await fetch(srtFilePath);
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const srtContent = await response.text();
+      const webvttOutput = this.srtToWebVTT(srtContent);
+
+      // console.log('cehck webvttOutpur', webvttOutput);
+      this.vttContent = webvttOutput;
+
+      // Create a Blob from the WebVTT output
+      // const blob = new Blob([webvttOutput], { type: 'text/vtt' });
+      // const url = URL.createObjectURL(blob);
+
+      // Create a link to download the WebVTT file
+      // const link = document.createElement('a');
+      // link.href = url;
+      // link.download = 'captions.vtt'; // Set the desired filename
+      // link.textContent = 'Download WebVTT File';
+      // document.body.appendChild(link); // Add the link to the document
+
+      // this.vttContent = url;
+      // console.log(
+      //   'WebVTT file created and download link added to the document.',
+      //   link
+      // );
+    } catch (error) {
+      console.error('Error fetching the SRT file:', error);
+    }
+  }
+
+  srtToWebVTT(srtContent: any) {
+    const lines = srtContent.split('\n');
+    let webvttContent = 'WEBVTT\n\n'; // Start with the WebVTT header
+
+    for (let i = 0; i < lines.length; i++) {
+      // Ignore empty lines
+      if (lines[i].trim() === '') continue;
+
+      // If the line is a number, skip it
+      if (!isNaN(lines[i].trim())) continue;
+
+      // Parse timestamps
+      if (lines[i].includes('-->')) {
+        // Replace commas with periods for WebVTT
+        const timestamp = lines[i].replace(',', '.');
+        webvttContent += `${timestamp}\n`;
+      } else {
+        // Add caption text
+        webvttContent += `${lines[i].trim()}\n`;
+      }
+
+      // Separate captions with a new line
+      if (lines[i + 1] && lines[i + 1].includes('-->')) {
+        webvttContent += '\n';
+      }
+    }
+
+    return webvttContent.trim(); // Remove trailing whitespace
+  }
+
+  // loadCaptions(): void {
+  //   const srtUrl = '../../../assets/captions.srt'; // Path to your SRT file
+
+  //   this.convertSRTToVTT(srtUrl)
+  //     .then((vtt) => {
+  //       this.vttContent = vtt;
+  //     })
+  //     .catch((error) => {
+  //       console.error('Error loading captions:', error);
+  //     });
+  // }
+
+  // convertSRTToVTT(url: string): Promise<string> {
+  //   return fetch(url)
+  //     .then((response) => {
+  //       if (!response.ok) {
+  //         throw new Error('Network response was not ok');
+  //       }
+  //       return response.text();
+  //     })
+  //     .then((srt) => {
+  //       const lines = srt.split('\n');
+  //       let vttContent = 'WEBVTT\n\n'; // Start with the VTT header
+
+  //       for (let i = 0; i < lines.length; i++) {
+  //         const line = lines[i].trim();
+
+  //         if (line === '') {
+  //           continue; // Skip empty lines
+  //         }
+
+  //         // Skip subtitle index line (numbers)
+  //         if (!isNaN(Number(line))) {
+  //           continue;
+  //         }
+
+  //         // Check for timestamp lines
+  //         if (line.includes('-->')) {
+  //           // Replace commas with periods in both start and end timestamps
+  //           const timestampLine = line.replace(/,/g, '.');
+  //           vttContent += `${timestampLine}\n`;
+  //           i++; // Move to the next line to get the subtitle text
+
+  //           // Check if the next line contains the subtitle text
+  //           if (i < lines.length) {
+  //             const subtitleText = lines[i].trim();
+  //             if (subtitleText) {
+  //               vttContent += `${subtitleText}\n\n`; // Add subtitle text with newline
+  //             }
+  //           }
+  //         }
+  //       }
+
+  //       return vttContent.trim(); // Trim any extra whitespace
+  //     })
+  //     .catch((error) => {
+  //       console.error('Error fetching or converting SRT:', error);
+  //       return ''; // Return an empty string or handle the error as needed
+  //     });
+  // }
+
+  initializePlayer(): void {
+    this.player = videojs(this.videoPlayerRef.nativeElement, {
+      controls: true,
+      autoplay: false,
+      preload: 'auto',
+      sources: [
+        {
+          src: 'https://vjs.zencdn.net/v/oceans.mp4', // Sample video
+          type: 'video/mp4',
+        },
+      ],
+      tracks: [
+        {
+          kind: 'subtitles',
+          src: '../../../assets/captions-en.vtt',
+          // 'data:text/vtt;charset=utf-8,' +
+          // encodeURIComponent('../../../assets/captions-en.vtt'), // Use the VTT content
+          srclang: 'en',
+          label: 'English',
+        },
+        {
+          kind: 'subtitles',
+          src: '../../../assets/captions-hi.vtt',
+          // 'data:text/vtt;charset=utf-8,' +
+          // encodeURIComponent(this.vttContent), // Use the VTT content
+          srclang: 'hi',
+          label: 'Hindi',
+        },
+        {
+          kind: 'subtitles',
+          // src:
+          //   'data:text/vtt;charset=utf-8,' +
+          //   encodeURIComponent(this.vttContent), // Use the VTT content
+          srclang: 'fs',
+          label: 'SRT',
+        },
+      ],
+    });
+    let textTracks: TextTrackList = this.player.textTracks();
+    textTracks.addEventListener('change', () => {
+      // Log the currently active track
+      for (let i = 0; i < textTracks.length; i++) {
+        const track = textTracks[i] as unknown as videojs.TextTrack; // Type assertion
+
+        if (track.mode === 'showing') {
+          console.log('Active track selected:', track.language);
+          console.log('Label:', track.label);
+          // console.log(this.vttContent);
+        }
+      }
+    });
+
+    for (let i = 0; i < textTracks.length; i++) {
+      const track = textTracks[i] as unknown as videojs.TextTrack;
+      track.addEventListener('error', () => {
+        console.error(
+          `Error loading track "${track.label}" (${track.language}):`
+        );
+      });
+    }
+    // Listen for error events on the player
+    this.player.on('error', () => {
+      const error = this.player.error();
+      console.error('Player error:', error);
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.player) {
+      this.player.dispose();
+    }
+  }
+}
+
+// convertSRTToVTT(url: string): Promise<string> {
+//   return fetch(url)
+//     .then((response) => {
+//       if (!response.ok) {
+//         throw new Error('Network response was not ok');
+//       }
+//       return response.text();
+//     })
+//     .then((srt) => {
+//       const lines = srt.split('\n');
+//       let vttContent = 'WEBVTT\n\n'; // Start with the VTT header
+
+//       for (let i = 0; i < lines.length; i++) {
+//         const line = lines[i].trim();
+
+//         if (line === '') {
+//           continue; // Skip empty lines
+//         }
+
+//         // Skip subtitle index line (numbers)
+//         if (!isNaN(Number(line))) {
+//           continue;
+//         }
+
+//         // Check for timestamp lines
+//         if (i < lines.length - 1 && lines[i + 1].includes('-->')) {
+//           // Replace comma with period in the timestamp
+//           const timestampLine = line.replace(',', '.');
+//           vttContent += `${timestampLine}\n`;
+//           i++; // Move to the next line to get the subtitle text
+//         } else {
+//           // Add the subtitle text to VTT content
+//           vttContent += `${line}\n\n`;
+//         }
+//       }
+
+//       return vttContent.trim(); // Trim any extra whitespace
+//     })
+//     .catch((error) => {
+//       console.error('Error fetching or converting SRT:', error);
+//       return ''; // Return an empty string or handle the error as needed
+//     });
+// }
+// loadCaptions(): void {
+//   const txtUrl = '../../../assets/captions-en.vtt'; // Path to your TXT file
+
+//   fetch(txtUrl)
+//     .then((response) => {
+//       if (!response.ok) {
+//         throw new Error('Network response was not ok');
+//       }
+//       return response.text();
+//     })
+//     .then((data) => {
+
+//       // this.vttContent = this.convertToVTT(data);
+//       this.vttContent = data;
+
+//       this.initializePlayer();
+//     })
+//     .catch((error) => {
+//       console.error('Error loading captions:', error);
+//     });
+// }
+
+// convertToVTT(text: string): string {
+//   const lines = text.split('\n');
+//   let vttContent = 'WEBVTT\n\n';
+
+//   lines.forEach((line, index) => {
+//     const start = index * 10; // Example: each line shows for 10 seconds
+//     const end = start + 10;
+//     vttContent += `${index + 1}\n`;
+//     vttContent += `00:00:${start
+//       .toString()
+//       .padStart(2, '0')}.000 --> 00:00:${end
+//       .toString()
+//       .padStart(2, '0')}.000\n`;
+//     vttContent += `${line}\n\n`;
+//   });
+
+//   return vttContent;
+// }
+// convertSRTToVTT(url: string): Promise<string> {
+//   return fetch(url)
+//     .then((response) => {
+//       if (!response.ok) {
+//         throw new Error('Network response was not ok');
+//       }
+//       return response.text();
+//     })
+//     .then((srt) => {
+//       const lines = srt.split('\n');
+//       let vttContent = 'WEBVTT\n\n'; // Start with the VTT header
+
+//       for (let i = 0; i < lines.length; i++) {
+//         const line = lines[i].trim();
+
+//         if (line === '') {
+//           continue; // Skip empty lines
+//         }
+
+//         // Skip subtitle index line (numbers)
+//         if (!isNaN(Number(line))) {
+//           continue;
+//         }
+
+//         // Check for timestamp lines
+//         if (line.includes('-->')) {
+//           // Replace comma with period in the timestamp
+//           const timestampLine = line.replace(/,/g, '.');
+//           vttContent += `${timestampLine}\n`;
+//           i++; // Move to the next line to get the subtitle text
+
+//           // Check if the next line contains the subtitle text
+//           if (i < lines.length) {
+//             const subtitleText = lines[i].trim();
+//             if (subtitleText) {
+//               vttContent += `${subtitleText}\n\n`; // Add subtitle text with newline
+//             }
+//           }
+//         }
+//       }
+
+//       return vttContent.trim(); // Trim any extra whitespace
+//     })
+//     .catch((error) => {
+//       console.error('Error fetching or converting SRT:', error);
+//       return ''; // Return an empty string or handle the error as needed
+//     });
+// }

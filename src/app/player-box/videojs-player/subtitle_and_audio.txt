@@ -1,0 +1,66 @@
+===========HTML====================
+
+<video
+  id="videoPlayer"
+  class="video-js vjs-default-skin vjs-big-play-centered"
+  controls
+  preload="auto"
+  width="640"
+  height="264"
+></video>
+
+======================================TS========================
+
+export class VideojsPlayerComponent implements OnInit, OnDestroy {
+  ngOnInit(): void {}
+
+  private player: any;
+  private videoJsOptions: any = {
+    autoplay: false,
+    controls: true,
+    sources: [
+      {
+        src: 'https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8', // Use this for HLS
+        type: 'application/x-mpegURL',
+      },
+    ],
+  };
+
+  ngAfterViewInit() {
+    this.player = videojs('videoPlayer', this.videoJsOptions, () => {
+      // Add audio tracks
+      const spanishTrack = new videojs.AudioTrack({
+        id: 'my-spanish-audio-track',
+        kind: 'translation',
+        label: 'Spanish',
+        language: 'es',
+      });
+      const englishTrack = new videojs.AudioTrack({
+        id: 'my-english-audio-track',
+        kind: 'translation',
+        label: 'English',
+        language: 'en',
+      });
+      // Add tracks to the player
+      this.player.audioTracks().addTrack(spanishTrack);
+      this.player.audioTracks().addTrack(englishTrack);
+      // Listen for track changes
+      this.player.audioTracks().addEventListener('change', () => {
+        const audioTrackList = this.player.audioTracks();
+        for (let i = 0; i < audioTrackList.length; i++) {
+          const track = audioTrackList[i];
+          if (track.enabled) {
+            console.log('Enabled Audio Track: ' + track.label);
+            return;
+          }
+        }
+      });
+    });
+  }
+
+  ngOnDestroy() {
+    if (this.player) {
+      this.player.dispose();
+    }
+  }
+}
